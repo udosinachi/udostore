@@ -107,10 +107,20 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 })
 
+// desc     Get to rated products
+// @route   GET /api/products/top
+// @access  Pubic
+const getTopProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({}).sort({ rating: -1 }).limit(3)
+
+  res.json(products)
+})
+
 export {
   getProducts,
   getProductById,
   deleteProduct,
   createProduct,
   updateProduct,
+  getTopProducts,
 }
