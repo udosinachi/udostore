@@ -23,7 +23,6 @@ const productSchema = mongoose.Schema(
       required: true,
       ref: 'User',
     },
-
     name: {
       type: String,
       required: true,
@@ -44,7 +43,7 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    review: [reviewSchema],
+    reviews: [reviewSchema],
     rating: {
       type: Number,
       required: true,

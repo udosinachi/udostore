@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler'
 import Product from '../models/productModel.js'
 
 // @desc    Fetch all products
-// @routes  GET /api/products
+// @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
   const pageSize = 10
@@ -26,7 +26,7 @@ const getProducts = asyncHandler(async (req, res) => {
 })
 
 // @desc    Fetch single product
-// @routes  GET /api/products/:id
+// @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
@@ -40,7 +40,7 @@ const getProductById = asyncHandler(async (req, res) => {
 })
 
 // @desc    Delete a product
-// @routes  DELETE /api/products/:id
+// @route   DELETE /api/products/:id
 // @access  Private/Admin
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
@@ -54,8 +54,8 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 })
 
-// @desc    Create product
-// @routes  POST /api/products
+// @desc    Create a product
+// @route   POST /api/products
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
@@ -64,7 +64,7 @@ const createProduct = asyncHandler(async (req, res) => {
     user: req.user._id,
     image: '/images/sample.jpg',
     brand: 'Sample brand',
-    category: 'Sample Category',
+    category: 'Sample category',
     countInStock: 0,
     numReviews: 0,
     description: 'Sample description',
@@ -75,7 +75,7 @@ const createProduct = asyncHandler(async (req, res) => {
 })
 
 // @desc    Update a product
-// @routes  PUT /api/products/:id
+// @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
   const {
@@ -107,9 +107,50 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 })
 
-// desc     Get to rated products
+// @desc    Create new review
+// @route   POST /api/products/:id/reviews
+// @access  Private
+const createProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body
+
+  const product = await Product.findById(req.params.id)
+
+  if (product) {
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    )
+
+    if (alreadyReviewed) {
+      res.status(400)
+      throw new Error('Product already reviewed')
+    }
+
+    const review = {
+      name: req.user.name,
+      rating: Number(rating),
+      comment,
+      user: req.user._id,
+    }
+
+    product.reviews.push(review)
+
+    product.numReviews = product.reviews.length
+
+    product.rating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length
+
+    await product.save()
+    res.status(201).json({ message: 'Review added' })
+  } else {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+})
+
+// @desc    Get top rated products
 // @route   GET /api/products/top
-// @access  Pubic
+// @access  Public
 const getTopProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({}).sort({ rating: -1 }).limit(3)
 
@@ -122,5 +163,6 @@ export {
   deleteProduct,
   createProduct,
   updateProduct,
+  createProductReview,
   getTopProducts,
 }
